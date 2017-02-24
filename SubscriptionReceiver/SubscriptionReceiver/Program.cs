@@ -9,9 +9,8 @@ using MessageHandler.Runtime.ConfigurationSettings;
 using MessageHandler.Runtime.EventProcessing;
 using MessageHandler.Runtime.EventProcessing.Convention;
 using MessageHandler.Runtime.EventProcessing.MessagePump.Pumps;
-using Microsoft.ServiceBus.Messaging;
 
-namespace QueueConsoleSender
+namespace SubscriptionReceiver
 {
     class Program
     {
@@ -32,55 +31,32 @@ namespace QueueConsoleSender
         {
             try
             {
-                config.Connectionstring(
-                    Environment.GetEnvironmentVariable("MessageHandler.AzureServiceBus.Connectionstring"));
-                config.ChannelId("Console");
+                config.Connectionstring(Environment.GetEnvironmentVariable("MessageHandler.AzureServiceBus.Connectionstring"));
+                config.ChannelId("consoleTopic");
                 config.DisruptorRingSize(1024);
-                var pump = new QueuePump(settings);
+                config.HandlerConfigurationId("consoleSubscription");
+                var pump = new SubscriptionPump(settings);
                 var messageReceiverSettings = new MessageReceiverSettings()
                 {
-                    NumberOfReceivers = 5,
-                    BatchSize = 100,
-                    ServerWaitTime = TimeSpan.FromSeconds(1)
+                    NumberOfReceivers = 20,
+                    BatchSize = 1000,
+                    ServerWaitTime = TimeSpan.FromMilliseconds(1000)
                 };
                 config.MessageReceiverSettings(messageReceiverSettings);
                 config.RegisterMessagePump(pump);
                 config.UseEventProcessingRuntime();
                 Func<IProcessingContext, Task> pipeline = ctx => Task.CompletedTask;
                 config.Pipeline(pipeline);
-                Console.WriteLine("Press a key to start.");
+                var runtime = await HandlerRuntime.Create(config);
+                await runtime.Start();
+                Console.WriteLine("Press a key to stop.");
                 Console.ReadKey();
-                bool YN = false;
-                do
-                {
-                    await SendMessage();
-                } while (YN == false); 
-                Console.WriteLine("Messages sent.");
-                Console.ReadKey();
-                Console.WriteLine("Program finished.");
-                Console.ReadKey();
+                await runtime.Stop();
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
                 Console.ReadKey();
-            }
-        }
-
-        public static async Task SendMessage()
-        {
-            var factory = MessagingFactory.CreateFromConnectionString(settings.GetConnectionstring());
-            List<BrokeredMessage> messages = new List<BrokeredMessage>();
-            var myMessageSender = factory.CreateMessageSender(settings.GetChannelId());
-            for (int i = 0; i < 100; i++)
-            {
-                messages.Clear();
-                for (int j = 0; j < 300; j++)
-                {
-                    var message = new BrokeredMessage("Console single message");
-                    messages.Add(message);
-                }
-                await myMessageSender.SendBatchAsync(messages);
             }
         }
     }

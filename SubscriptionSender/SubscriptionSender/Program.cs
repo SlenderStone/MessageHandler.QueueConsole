@@ -11,7 +11,7 @@ using MessageHandler.Runtime.EventProcessing.Convention;
 using MessageHandler.Runtime.EventProcessing.MessagePump.Pumps;
 using Microsoft.ServiceBus.Messaging;
 
-namespace QueueConsoleSender
+namespace SubscriptionSender
 {
     class Program
     {
@@ -34,27 +34,16 @@ namespace QueueConsoleSender
             {
                 config.Connectionstring(
                     Environment.GetEnvironmentVariable("MessageHandler.AzureServiceBus.Connectionstring"));
-                config.ChannelId("Console");
+                config.ChannelId("consoleTopic");
                 config.DisruptorRingSize(1024);
-                var pump = new QueuePump(settings);
-                var messageReceiverSettings = new MessageReceiverSettings()
-                {
-                    NumberOfReceivers = 5,
-                    BatchSize = 100,
-                    ServerWaitTime = TimeSpan.FromSeconds(1)
-                };
-                config.MessageReceiverSettings(messageReceiverSettings);
-                config.RegisterMessagePump(pump);
-                config.UseEventProcessingRuntime();
-                Func<IProcessingContext, Task> pipeline = ctx => Task.CompletedTask;
-                config.Pipeline(pipeline);
+                config.HandlerConfigurationId("consoleSubscription");
                 Console.WriteLine("Press a key to start.");
                 Console.ReadKey();
                 bool YN = false;
                 do
                 {
                     await SendMessage();
-                } while (YN == false); 
+                } while (YN == false);
                 Console.WriteLine("Messages sent.");
                 Console.ReadKey();
                 Console.WriteLine("Program finished.");
