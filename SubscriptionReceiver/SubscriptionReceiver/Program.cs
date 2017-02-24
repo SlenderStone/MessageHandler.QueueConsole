@@ -40,12 +40,17 @@ namespace SubscriptionReceiver
                 {
                     NumberOfReceivers = 20,
                     BatchSize = 1000,
-                    ServerWaitTime = TimeSpan.FromMilliseconds(1000)
+                    ServerWaitTime = TimeSpan.FromMilliseconds(100)
                 };
                 config.MessageReceiverSettings(messageReceiverSettings);
                 config.RegisterMessagePump(pump);
                 config.UseEventProcessingRuntime();
-                Func<IProcessingContext, Task> pipeline = ctx => Task.CompletedTask;
+                int invocationCount = 0;
+                Func<IProcessingContext, Task> pipeline = async ctx =>
+                {
+
+                    await Console.Out.WriteLineAsync(invocationCount++ + " " + DateTime.Now.ToLongTimeString());
+                };
                 config.Pipeline(pipeline);
                 var runtime = await HandlerRuntime.Create(config);
                 await runtime.Start();

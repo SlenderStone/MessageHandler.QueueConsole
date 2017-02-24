@@ -43,7 +43,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="MessageHandler.Runtime.EventProcessing, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MessageHandler.Runtime.EventProcessing.1.0.0-CI00035\lib\net461\MessageHandler.Runtime.EventProcessing.dll</HintPath>
+      <HintPath>..\packages\MessageHandler.Runtime.EventProcessing.1.0.0-CI00036\lib\net461\MessageHandler.Runtime.EventProcessing.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.ServiceBus, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">

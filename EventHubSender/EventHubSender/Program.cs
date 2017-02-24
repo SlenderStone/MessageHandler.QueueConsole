@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.ExceptionServices;
+using System.Text;
 using System.Threading.Tasks;
 using MessageHandler.Runtime;
 using MessageHandler.Runtime.ConfigurationSettings;
 using MessageHandler.Runtime.EventProcessing;
 using MessageHandler.Runtime.EventProcessing.Convention;
-using MessageHandler.Runtime.EventProcessing.MessagePump.Pumps;
 using Microsoft.ServiceBus.Messaging;
 
-namespace QueueConsole
+namespace EventHubSender
 {
     class Program
     {
@@ -26,38 +26,26 @@ namespace QueueConsole
             {
                 ExceptionDispatchInfo.Capture(ex.Flatten().InnerExceptions.First()).Throw();
             }
-
         }
-
         static async Task MainAsync(string[] args)
         {
             try
             {
-                config.Connectionstring(
-                    Environment.GetEnvironmentVariable("MessageHandler.AzureServiceBus.Connectionstring"));
-                config.ChannelId("Console");
-                config.DisruptorRingSize(1024);
-                var pump = new QueuePump(settings);
-                var messageReceiverSettings = new MessageReceiverSettings()
-                {
-                    NumberOfReceivers = 20,
-                    BatchSize = 1000,
-                    ServerWaitTime = TimeSpan.FromMilliseconds(100)
-                };
-                config.MessageReceiverSettings(messageReceiverSettings);
-                config.RegisterMessagePump(pump);
+                config.Connectionstring(Environment.GetEnvironmentVariable("MessageHandler.EventHub.Connectionstring"));
                 config.UseEventProcessingRuntime();
-                int invocationCount = 0;
-                Func<IProcessingContext, Task> pipeline = async ctx =>
+                config.ChannelId("consoleEventHub");
+                config.DisruptorRingSize(1024);
+                config.HandlerConfigurationId("test");
+                var client = EventHubClient.CreateFromConnectionString(settings.GetConnectionstring(), settings.GetChannelId());
+                bool YN= false;
+                do
                 {
-                    await Console.Out.WriteLineAsync(invocationCount++ + " " + DateTime.Now.ToLongTimeString());
-                };
-                config.Pipeline(pipeline);
-                var runtime = await HandlerRuntime.Create(config);
-                await runtime.Start();
+                    
+                        
+                    await client.SendAsync(new EventData(Encoding.UTF8.GetBytes("test message")));
+                } while (YN == false); 
                 Console.WriteLine("Press a key to stop.");
                 Console.ReadKey();
-                await runtime.Stop();
             }
             catch (Exception e)
             {
